@@ -162,12 +162,29 @@ void occQt::about()
 
 void occQt::makeBox()
 {
-    TopoDS_Shape aTopoBox = BRepPrimAPI_MakeBox(3.0, 4.0, 5.0).Shape();
-    Handle(AIS_Shape) anAisBox = new AIS_Shape(aTopoBox);
+    //Input STL
+	QString fileName = QFileDialog::getOpenFileName(this, tr("File_Import"), "D:/demo/W", tr("Modeling(*.stl);;All files(*.*)"));
+	if (fileName.isEmpty())
+	{
+		QMessageBox::warning(this, "Warning!", "Failed to open the Latiice Solid Modeling!");
+	}
+	RWStl reader_stl;
+	OSD_Path stlFile(fileName.toStdString().c_str());
+	triFace = reader_stl.ReadFile(stlFile);
+	Standard_Integer nTriangles = triFace->NbTriangles();
 
-    anAisBox->SetColor(Quantity_NOC_AZURE);
-
-    myOccView->getContext()->Display(anAisBox, Standard_True);
+	nodes.Resize(1, triFace->NbNodes(), true);
+	triangles.Resize(1, triFace->NbTriangles(), true);
+	nodes = triFace->Nodes();
+	triangles = triFace->Triangles();
+	
+	TopoDS_Face face;
+	BRep_Builder builder;
+	builder.MakeFace(face);
+	builder.UpdateFace(face, triFace);
+	//myOccView->DisplaySolid(face,Quantity_NOC_GRAY,0.8f);
+	
+	ClassMesh = new ClassifyPt(triFace);
 }
 
 void occQt::makeCone()
